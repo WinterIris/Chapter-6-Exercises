@@ -1,123 +1,102 @@
 /*
-File Name: Paint Estimation
+File Name: Rock Paper Scissors
 Programmer: Christopher Wilson
 Date: 4/25
-Requirements: Create a repeatable program for a painting company where the user can enter the number of gallons of paint required, hours of labor required, the cost of the paint, labor charges and total cost of the paint job
-This also includes input validation.
+Requirements: Create a program that plays rock paper scissors with the user
 */
 
 #include <iostream>
-#include <iomanip> 
+#include <cstdlib>  
+#include <ctime>    
+#include <string>
+#include <algorithm>
+
 using namespace std;
 
-// ===== Function Prototypes =====
-int getNumberOfRooms();
-double getPricePerGallon();
-double getTotalWallSpace(int rooms);
-void calculateAndDisplayResults(double totalWallSpace, double pricePerGallon);
-bool askToRunAgain();
+// Function prototypes
+string getComputerChoice();
+string getUserChoice();
+string determineWinner(const string& userChoice, const string& computerChoice);
+void displayResult(const string& winner, const string& computerChoice);
+void playRound();
+void toLowerCase(string& input);
+bool isValidChoice(const string& choice);
 
-// ===== Main Program =====
 int main() {
-    do {
-        int rooms = getNumberOfRooms();
-        double pricePerGallon = getPricePerGallon();
-        double totalWallSpace = getTotalWallSpace(rooms);
-
-        calculateAndDisplayResults(totalWallSpace, pricePerGallon);
-    } while (askToRunAgain());
-
-    cout << "Thank you for using the Painting Cost Estimator!\n";
+    srand(static_cast<unsigned int>(time(0))); 
+    cout << "Welcome to Rock, Paper, Scissors!" << endl;
+    playRound();
     return 0;
 }
 
-// ===== Module 1: Get number of rooms =====
-int getNumberOfRooms() {
-    int rooms;
-    cout << "Enter the number of rooms to be painted: ";
-    cin >> rooms;
-
-    while (rooms < 1) {
-        cout << "Error! Number of rooms must be at least 1. Try again: ";
-        cin >> rooms;
-    }
-
-    return rooms;
+// Gets a random choice for the computer
+string getComputerChoice() {
+    int randomNum = rand() % 3; // 0, 1, 2
+    const string choices[3] = { "rock", "paper", "scissors" };
+    return choices[randomNum];
 }
 
-// ===== Module 2: Get price per gallon =====
-double getPricePerGallon() {
-    double price;
-    cout << "Enter the price of the paint per gallon: $";
-    cin >> price;
-
-    while (price < 10.00) {
-        cout << "Error! Price must be at least $10.00. Try again: $";
-        cin >> price;
-    }
-
-    return price;
-}
-
-// ===== Module 3: Get total wall space for all rooms =====
-double getTotalWallSpace(int rooms) {
-    double totalWallSpace = 0.0;
-    double wallSpace;
-
-    for (int i = 1; i <= rooms; i++) {
-        cout << "Enter the square feet of wall space for room #" << i << ": ";
-        cin >> wallSpace;
-
-        while (wallSpace < 0) {
-            cout << "Error! Wall space cannot be negative. Try again: ";
-            cin >> wallSpace;
-        }
-
-        totalWallSpace += wallSpace;
-    }
-
-    return totalWallSpace;
-}
-
-// ===== Module 4: Calculate and Display Results =====
-void calculateAndDisplayResults(double totalWallSpace, double pricePerGallon) {
-    const double COVERAGE_PER_GALLON = 110.0;
-    const double HOURS_PER_GALLON = 8.0;
-    const double LABOR_RATE_PER_HOUR = 25.00;
-
-    double gallonsNeeded = totalWallSpace / COVERAGE_PER_GALLON;
-    double laborHours = gallonsNeeded * HOURS_PER_GALLON;
-    double paintCost = gallonsNeeded * pricePerGallon;
-    double laborCharges = laborHours * LABOR_RATE_PER_HOUR;
-    double totalCost = paintCost + laborCharges;
-
-    cout << fixed << setprecision(2); 
-    cout << "\n=== Painting Job Estimate ===\n";
-    cout << "Gallons of paint required: " << gallonsNeeded << endl;
-    cout << "Hours of labor required: " << laborHours << endl;
-    cout << "Cost of paint: $" << paintCost << endl;
-    cout << "Labor charges: $" << laborCharges << endl;
-    cout << "Total cost of the paint job: $" << totalCost << endl;
-    cout << "==============================" << endl;
-}
-
-// ===== Module 5: Ask if user wants to run again =====
-bool askToRunAgain() {
+// Gets and validates the user's choice
+string getUserChoice() {
     string choice;
-    cout << "\nWould you like to estimate another paint job? (yes/no): ";
+    cout << "Enter your choice (rock, paper, or scissors): ";
     cin >> choice;
+    toLowerCase(choice);
 
-    for (auto& c : choice) {
-        c = tolower(c);
-    }
-
-    while (choice != "yes" && choice != "no") {
-        cout << "Invalid input. Please enter 'yes' or 'no': ";
+    while (!isValidChoice(choice)) {
+        cout << "Invalid input. Please enter rock, paper, or scissors: ";
         cin >> choice;
-        for (auto& c : choice) {
-            c = tolower(c);
-        }
+        toLowerCase(choice);
     }
+    return choice;
+}
 
-    return (choice == "yes");
+// Converts a string to lowercase
+void toLowerCase(string& input) {
+    transform(input.begin(), input.end(), input.begin(), ::tolower);
+}
+
+// Checks if the choice is valid
+bool isValidChoice(const string& choice) {
+    return choice == "rock" || choice == "paper" || choice == "scissors";
+}
+
+// Determines the winner based on choices
+string determineWinner(const string& userChoice, const string& computerChoice) {
+    if (userChoice == computerChoice) {
+        return "tie";
+    }
+    else if ((userChoice == "rock" && computerChoice == "scissors") ||
+        (userChoice == "scissors" && computerChoice == "paper") ||
+        (userChoice == "paper" && computerChoice == "rock")) {
+        return "user";
+    }
+    else {
+        return "computer";
+    }
+}
+
+// Displays the result of the round
+void displayResult(const string& winner, const string& computerChoice) {
+    cout << "Computer chose: " << computerChoice << endl;
+    if (winner == "tie") {
+        cout << "It's a tie! Play again.\n" << endl;
+    }
+    else if (winner == "user") {
+        cout << "You win!" << endl;
+    }
+    else {
+        cout << "Computer wins!" << endl;
+    }
+}
+
+// Plays rounds until there is a winner (no tie)
+void playRound() {
+    string winner = "tie";
+    while (winner == "tie") {
+        string userChoice = getUserChoice();
+        string computerChoice = getComputerChoice();
+        winner = determineWinner(userChoice, computerChoice);
+        displayResult(winner, computerChoice);
+    }
 }
