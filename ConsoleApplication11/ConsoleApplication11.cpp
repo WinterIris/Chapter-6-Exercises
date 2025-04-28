@@ -1,123 +1,185 @@
 /*
-File Name: Paint Estimation
+File Name: Rock Paper Scissors 3
 Programmer: Christopher Wilson
 Date: 4/25
-Requirements: Create a repeatable program for a painting company where the user can enter the number of gallons of paint required, hours of labor required, the cost of the paint, labor charges and total cost of the paint job
-This also includes input validation.
+Requirements: Create a program that plays rock paper scissors with the user
 */
 
 #include <iostream>
-#include <iomanip> 
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+#include <string>
+#include <map>
+
 using namespace std;
 
-// ===== Function Prototypes =====
-int getNumberOfRooms();
-double getPricePerGallon();
-double getTotalWallSpace(int rooms);
-void calculateAndDisplayResults(double totalWallSpace, double pricePerGallon);
-bool askToRunAgain();
+// ===== Module 1: Handles file operations (load, save, delete) =====
 
-// ===== Main Program =====
-int main() {
-    do {
-        int rooms = getNumberOfRooms();
-        double pricePerGallon = getPricePerGallon();
-        double totalWallSpace = getTotalWallSpace(rooms);
+// Loads existing scores from the file into a map
+void loadScores(map<string, int>& scores) {
+    ifstream file("scores.txt");
+    string name;
+    int score;
 
-        calculateAndDisplayResults(totalWallSpace, pricePerGallon);
-    } while (askToRunAgain());
-
-    cout << "Thank you for using the Painting Cost Estimator!\n";
-    return 0;
-}
-
-// ===== Module 1: Get number of rooms =====
-int getNumberOfRooms() {
-    int rooms;
-    cout << "Enter the number of rooms to be painted: ";
-    cin >> rooms;
-
-    while (rooms < 1) {
-        cout << "Error! Number of rooms must be at least 1. Try again: ";
-        cin >> rooms;
+    while (file >> name >> score) {
+        scores[name] = score;
     }
 
-    return rooms;
+    file.close();
 }
 
-// ===== Module 2: Get price per gallon =====
-double getPricePerGallon() {
-    double price;
-    cout << "Enter the price of the paint per gallon: $";
-    cin >> price;
+// Saves all scores back into the file
+void saveScores(const map<string, int>& scores) {
+    ofstream file("scores.txt");
 
-    while (price < 10.00) {
-        cout << "Error! Price must be at least $10.00. Try again: $";
-        cin >> price;
+    for (const auto& entry : scores) {
+        file << entry.first << " " << entry.second << endl;
     }
 
-    return price;
+    file.close();
 }
 
-// ===== Module 3: Get total wall space for all rooms =====
-double getTotalWallSpace(int rooms) {
-    double totalWallSpace = 0.0;
-    double wallSpace;
-
-    for (int i = 1; i <= rooms; i++) {
-        cout << "Enter the square feet of wall space for room #" << i << ": ";
-        cin >> wallSpace;
-
-        while (wallSpace < 0) {
-            cout << "Error! Wall space cannot be negative. Try again: ";
-            cin >> wallSpace;
-        }
-
-        totalWallSpace += wallSpace;
-    }
-
-    return totalWallSpace;
+// Clears the file (deletes all scores)
+void clearScores() {
+    ofstream file("scores.txt", ios::trunc); // Open and immediately truncate
+    file.close();
+    cout << "All scores have been deleted.\n";
 }
 
-// ===== Module 4: Calculate and Display Results =====
-void calculateAndDisplayResults(double totalWallSpace, double pricePerGallon) {
-    const double COVERAGE_PER_GALLON = 110.0;
-    const double HOURS_PER_GALLON = 8.0;
-    const double LABOR_RATE_PER_HOUR = 25.00;
+// ===== Module 2: Game play logic =====
 
-    double gallonsNeeded = totalWallSpace / COVERAGE_PER_GALLON;
-    double laborHours = gallonsNeeded * HOURS_PER_GALLON;
-    double paintCost = gallonsNeeded * pricePerGallon;
-    double laborCharges = laborHours * LABOR_RATE_PER_HOUR;
-    double totalCost = paintCost + laborCharges;
-
-    cout << fixed << setprecision(2); 
-    cout << "\n=== Painting Job Estimate ===\n";
-    cout << "Gallons of paint required: " << gallonsNeeded << endl;
-    cout << "Hours of labor required: " << laborHours << endl;
-    cout << "Cost of paint: $" << paintCost << endl;
-    cout << "Labor charges: $" << laborCharges << endl;
-    cout << "Total cost of the paint job: $" << totalCost << endl;
-    cout << "==============================" << endl;
+// Returns the computer's random choice
+string getComputerChoice() {
+    int randomNum = rand() % 3 + 1;
+    if (randomNum == 1)
+        return "rock";
+    else if (randomNum == 2)
+        return "paper";
+    else
+        return "scissors";
 }
 
-// ===== Module 5: Ask if user wants to run again =====
-bool askToRunAgain() {
+// Prompts the user for their choice
+string getUserChoice() {
     string choice;
-    cout << "\nWould you like to estimate another paint job? (yes/no): ";
+    cout << "Enter your choice (rock, paper, or scissors): ";
     cin >> choice;
 
     for (auto& c : choice) {
         c = tolower(c);
     }
 
-    while (choice != "yes" && choice != "no") {
-        cout << "Invalid input. Please enter 'yes' or 'no': ";
+    while (choice != "rock" && choice != "paper" && choice != "scissors") {
+        cout << "Invalid input. Please enter rock, paper, or scissors: ";
         cin >> choice;
         for (auto& c : choice) {
             c = tolower(c);
         }
     }
+    return choice;
+}
 
-    return (choice == "yes");
+// Determines and announces the winner
+string determineWinner(string userChoice, string computerChoice) {
+    cout << "Computer chose: " << computerChoice << endl;
+
+    if (userChoice == computerChoice) {
+        cout << "It's a tie! Play again.\n" << endl;
+        return "tie";
+    }
+    else if ((userChoice == "rock" && computerChoice == "scissors") ||
+        (userChoice == "scissors" && computerChoice == "paper") ||
+        (userChoice == "paper" && computerChoice == "rock")) {
+        cout << "You win this round!" << endl;
+        return "user";
+    }
+    else {
+        cout << "Computer wins this round!" << endl;
+        return "computer";
+    }
+}
+
+// Runs a full game session for a player
+void playGame(map<string, int>& scores) {
+    string playerName;
+    cout << "Please enter your name: ";
+    cin >> playerName;
+
+    int playerWins = 0;
+    bool doAgain = true;
+    string answer;
+
+    do {
+        string userChoice = getUserChoice();
+        string computerChoice = getComputerChoice();
+        string winner = determineWinner(userChoice, computerChoice);
+
+        if (winner == "user") {
+            playerWins++;
+        }
+
+        cout << "Do you want to play again? (yes/no): ";
+        cin >> answer;
+        for (auto& c : answer) c = tolower(c);
+        doAgain = (answer == "yes");
+
+    } while (doAgain);
+
+    cout << "Total wins for " << playerName << ": " << playerWins << endl;
+
+    // Update the best score if this session's wins are higher
+    if (scores.find(playerName) == scores.end() || playerWins > scores[playerName]) {
+        scores[playerName] = playerWins;
+    }
+
+    saveScores(scores); // Save updated scores
+}
+
+// ===== Module 3: Main module with menu =====
+
+void showMenu() {
+    cout << "\n=== Rock, Paper, Scissors Menu ===\n";
+    cout << "1. Show previous scores\n";
+    cout << "2. Start a new game\n";
+    cout << "3. Delete all scores\n";
+    cout << "4. Exit\n";
+    cout << "Enter your choice: ";
+}
+
+int main() {
+    srand(time(0)); // Seed random number generator
+    map<string, int> scores;
+    int choice;
+
+    loadScores(scores);
+
+    do {
+        showMenu();
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            cout << "\n--- Previous Scores ---\n";
+            for (const auto& entry : scores) {
+                cout << "Player: " << entry.first << " | Best Wins: " << entry.second << endl;
+            }
+            break;
+        case 2:
+            playGame(scores);
+            break;
+        case 3:
+            clearScores();
+            scores.clear(); // Also clear from memory
+            break;
+        case 4:
+            cout << "Thank you for playing!\n";
+            break;
+        default:
+            cout << "Invalid choice. Please try again.\n";
+        }
+
+    } while (choice != 4);
+
+    return 0;
 }
