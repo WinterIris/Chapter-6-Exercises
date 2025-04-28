@@ -14,7 +14,7 @@ using namespace std;
 
 
 string getComputerChoice() {
-    int randomNum = rand() % 3 + 1; // Random number between 1 and 3
+    int randomNum = rand() % 3 + 1; 
     if (randomNum == 1)
         return "rock";
     else if (randomNum == 2)
@@ -108,7 +108,7 @@ void playGame(const string& playerName) {
 }
 
 int main() {
-    srand(time(0)); // Seed random number generator
+    srand(time(0)); 
 
     string playerName;
     cout << "Welcome to Rock, Paper, Scissors!" << endl;
